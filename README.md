@@ -9,7 +9,7 @@
 This repository contains the code and experimental framework for **LAMA-VLM** (formerly Agentic RAG-VLM), a unified framework for robotic manipulation that bridges semantic understanding and physical execution by integrating **Retrieval-Augmented Generation (RAG)** with **Vision-Language Models (VLMs)**, **lifelong learning**, and **multi-agent state orchestration**.
 
 <p align="center">
-  <img src="paper/figures/fig_system_overview.png" alt="System Overview" width="800"/>
+  <img src="paper/figures/fig.1.png" alt="System Overview" width="800"/>
 </p>
 
 ### Key Components
