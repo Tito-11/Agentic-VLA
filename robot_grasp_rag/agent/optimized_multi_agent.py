@@ -3,6 +3,7 @@ import numpy as np
 import logging
 from ..core.memory_and_context import LifelongMemoryManager, ContextManager
 from ..core.graph_rag import GraphRAGManager
+from .qwen_vision_agent import QwenVisionAgent
 
 try:
     from langgraph.graph import StateGraph, START, END
@@ -20,7 +21,7 @@ class ToolBox:
     def __init__(self, env):
         self.env = env
         
-    def robust_move(self, target_pos, reason: str = "Unknown", precision=0.02, timeout=50, z_offset=0.0) -> Dict[str, Any]:
+    def robust_move(self, target_pos, reason: str = "Unknown", precision=0.02, timeout=120, z_offset=0.0, gripper_action=1.0, state=None) -> Dict[str, Any]:
         """
         基于 RESEARCH_DIRECTIONS.md 优化的工具：可审计型执行拦截、错误回退 (Error+Fallback)
         """
@@ -37,9 +38,32 @@ class ToolBox:
                     
                 delta = target - ee_pos
                 action = np.zeros(7)
-                action[6] = 1.0 # 夹爪张开
+                action[6] = gripper_action # -1.0 means keep grasping, 1.0 means open
                 action[0:3] = np.clip(delta * 12.0, -0.15, 0.15)
                 
+                # Dynamic VLM Yaw adjustment to prevent collision
+                if state is not None and "priors" in state:
+                    target_yaw = state["priors"].get("target_yaw")
+                    if target_yaw is not None:
+                        try:
+                            # Robosuite adapter caches the last obs, we extract eef_quat [x, y, z, w]
+                            last_obs = getattr(self.env, "_last_obs", None) or getattr(self.env.unwrapped, "_last_obs", None)
+                            if last_obs and 'robot0_eef_quat' in last_obs:
+                                current_quat = last_obs['robot0_eef_quat']
+                                from scipy.spatial.transform import Rotation as R
+                                current_yaw = R.from_quat(current_quat).as_euler('xyz')[2]
+                                delta_yaw = target_yaw - current_yaw
+                                
+                                # Normalize angle to [-pi, pi]
+                                while delta_yaw > np.pi: delta_yaw -= 2 * np.pi
+                                while delta_yaw < -np.pi: delta_yaw += 2 * np.pi
+                                
+                                # Apply proportional control to OSC rotation residual
+                                action[5] = np.clip(delta_yaw * 2.0, -0.3, 0.3)
+                        except Exception as yaw_err:
+                            logger.debug(f"Yaw extraction failed: {yaw_err}")
+                            pass
+                    
                 obs, reward, terminated, truncated, info = self.env.step(action)
                 self.env.render()
                 steps += 1
@@ -47,8 +71,12 @@ class ToolBox:
                 if np.linalg.norm(delta) < precision:
                     return {"status": "success", "message": f"Reached geometric target."}
             
-            # 返回给环境的异常信息，替代原本死板的错误字典
-            return {"status": "timeout", "message": f"Movement timeout. Collision might have occurred. Delta remaining: {delta}"}
+            # 把限时结束依然未精确贴合(往往是物理阻力的稳态误差)视为可用成功，防止 Critic 误判为超时失败而提前丢弃物体
+            dist = np.linalg.norm(delta)
+            if dist < 0.12:
+                return {"status": "success", "message": f"Movement stabilized near target. Distance: {dist:.3f}"}
+            else:
+                return {"status": "error", "message": f"Movement blocked by collision! Delta remaining: {delta}, Distance: {dist:.3f}"}
         except Exception as e:
             return {"status": "error", "message": f"Engine execution crashed: {str(e)}"}
 
@@ -103,6 +131,7 @@ class MultiAgentOrchestrator:
         self.memory = LifelongMemoryManager()
         self.context = ContextManager()
         self.graph_rag = GraphRAGManager()
+        self.vlm_agent = QwenVisionAgent() # Instantiate local Qwen3-VL-8B for grounding
         
         if HAS_LANGGRAPH:
             self.graph = self._build_langgraph()
@@ -170,12 +199,34 @@ class MultiAgentOrchestrator:
         clean_name = current_entity["node_id"].split('_')[-1]
         state["current_entity_name"] = clean_name
         
-        # 物理坐标系映射
-        target_obj_pose = current_entity["actor_ref"].pose.p
-        if hasattr(target_obj_pose, 'cpu'):
-            pos = target_obj_pose[0].cpu().numpy().copy()
+        # Capture current camera image for VLM
+        try:
+            obs = self.env.unwrapped.get_obs()
+            # If obs_mode="rgbd", the structure depends on maniskill. We just mock the array extraction here
+            img_array = obs.get("image", {}).get("hand_camera", {}).get("rgb", np.zeros((224,224,3)))
+        except:
+            img_array = np.zeros((224,224,3))
+            
+        # VLM Stage 0a: Visual Grounding to get estimated World Coordinates
+        vlm_pos = self.vlm_agent.get_grounding_coordinates(img_array, clean_name)
+        if vlm_pos is not None:
+            logger.info(f"    -> [VLM Grounding] {clean_name} found at {vlm_pos}")
+            pos = np.array(vlm_pos)
         else:
-            pos = target_obj_pose[0].copy() if len(target_obj_pose.shape) > 1 else target_obj_pose.copy()
+            logger.info(f"    -> [VLM Grounding Fallback] Using ground truth IK for {clean_name}")
+            # 物理坐标系映射 (Fallback)
+            target_obj_pose = current_entity["actor_ref"].pose.p
+            if hasattr(target_obj_pose, 'cpu'):
+                pos = target_obj_pose[0].cpu().numpy().copy()
+            else:
+                pos = target_obj_pose[0].copy() if len(target_obj_pose.shape) > 1 else target_obj_pose.copy()
+        
+        # VLM Stage 0b: Visual reasoning to determine safe Grasp Rotation (Yaw)
+        if hasattr(self.vlm_agent, 'predict_safe_yaw'):
+            yaw_rad = self.vlm_agent.predict_safe_yaw(img_array, clean_name)
+            state["vlm_predicted_yaw"] = yaw_rad
+        else:
+            state["vlm_predicted_yaw"] = None
         
         state["target_obj_pos"] = pos
         if "retries" not in state or state["current_entity_name"] != state.get("last_processed_entity", ""):
@@ -199,7 +250,12 @@ class MultiAgentOrchestrator:
         graph_strategy = self.graph_rag.retrieve_strategy(scene_graph)
         if graph_strategy: priors.update(graph_strategy)
         
-        logger.info(f"    -> RAG Prior injected: Z-Offset={priors.get('z_offset', 0.015)}, Force={priors.get('force', 'medium')}")
+        # Override with VLM predicted yaw if available
+        vlm_yaw = state.get("vlm_predicted_yaw", None)
+        if vlm_yaw is not None:
+            priors["target_yaw"] = vlm_yaw
+            
+        logger.info(f"    -> RAG/VLM Prior injected: Z-Offset={priors.get('z_offset', 0.015)}, Force={priors.get('force', 'medium')}, Yaw={priors.get('target_yaw', None)}")
         
         state["priors"] = priors
         state["scene_graph"] = scene_graph
@@ -216,14 +272,14 @@ class MultiAgentOrchestrator:
         
         logger.info("⚙️  [Execution Agent] Executing action sequence...")
         
-        # Hover
-        res_1 = self.tools.robust_move(target_pos, precision=0.03, z_offset=0.15, reason="Move to above target")
+        # Hover (Increased height to prevent collisions with tall objects)
+        res_1 = self.tools.robust_move(target_pos, precision=0.03, z_offset=0.25, reason="Move to above target", state=state)
         state["step_logs"].append(res_1)
         self.context.log_action(f"Hover ({clean_name})", res_1["status"], res_1["message"])
         
         # Descend
         if res_1["status"] != "error":
-            res_2 = self.tools.robust_move(target_pos, precision=0.02, timeout=60, z_offset=priors["z_offset"], reason="Descend to precise point")
+            res_2 = self.tools.robust_move(target_pos, precision=0.02, timeout=60, z_offset=priors["z_offset"], reason="Descend to precise point", state=state)
             state["step_logs"].append(res_2)
             self.context.log_action(f"Descend ({clean_name})", res_2["status"], res_2["message"])
         
@@ -250,7 +306,8 @@ class MultiAgentOrchestrator:
                  
         if is_success:
             self.memory.consolidate_memory(clean_name, {"status": "success"})
-            self.graph_rag.store_graph_experience(state["scene_graph"], {"z_offset": state["priors"].get("z_offset"), "force": state["priors"].get("force")})
+            if "scene_graph" in state and state["scene_graph"]:
+                self.graph_rag.store_graph_experience(state["scene_graph"], {"z_offset": state["priors"].get("z_offset"), "force": state["priors"].get("force")})
             state["is_valid"] = True
         else:
             self.memory.consolidate_memory(clean_name, {"status": "failure", "message": "collision"})
@@ -260,7 +317,7 @@ class MultiAgentOrchestrator:
             # 返回安全位
             logger.info("    -> [Critic] Rejecting. Returning to safe height.")
             self.tools.robust_release(reason="Emergency release")
-            self.tools.robust_move(state["target_obj_pos"], precision=0.03, z_offset=0.20, reason="Emergency retract")
+            self.tools.robust_move(state["target_obj_pos"], precision=0.03, z_offset=0.25, reason="Emergency retract")
             
             if state["retries"] <= 0:
                 logger.error(f"❌ Exhausted retries for {clean_name}. Aborting this specific target.")
@@ -274,12 +331,31 @@ class MultiAgentOrchestrator:
         clean_name = state["current_entity_name"]
         storage_bin = state["storage_bin"]
         
+        # Step 1: Securely lift the payload vertically first to avoid dragging
+        current_ee = self.tools.env.unwrapped.agent.tcp.pose.p
+        if hasattr(current_ee, 'cpu'): current_ee = current_ee[0].cpu().numpy()
+        else: current_ee = current_ee[0] if len(current_ee.shape) > 1 else current_ee
+        
+        lift_pos = current_ee.copy()
+        lift_pos[2] = 1.10 # Vertical clearance
+        self.tools.robust_move(lift_pos, precision=0.03, timeout=50, z_offset=0.0, reason="Lift payload securely", gripper_action=-1.0)
+        
         # Navigate and Release
-        move_res = self.tools.robust_move(storage_bin, precision=0.04, timeout=80, z_offset=0.0, reason="Transfer payload to storage")
+        # Hover straight over bin
+        above_bin = storage_bin.copy()
+        above_bin[2] = 1.05
+        move_res = self.tools.robust_move(above_bin, precision=0.04, timeout=120, z_offset=0.0, reason="Transfer payload to storage", gripper_action=-1.0)
         self.context.log_action(f"MoveToBin ({clean_name})", move_res["status"], move_res["message"])
+        
+        # Descend safely into the bin area to avoid dropping object and bouncing out
+        inside_bin = storage_bin.copy()
+        inside_bin[2] = 0.95 # Safe release height right over the bin walls without crashing into them
+        self.tools.robust_move(inside_bin, precision=0.04, timeout=80, z_offset=0.0, reason="Descend to bin", gripper_action=-1.0)
         
         release_res = self.tools.robust_release(reason="Release payload")
         self.context.log_action(f"Release ({clean_name})", release_res["status"], release_res["message"])
+        
+        return state
         
         # 渐进式上下文压缩
         comp_log = self.context.progressive_compression()

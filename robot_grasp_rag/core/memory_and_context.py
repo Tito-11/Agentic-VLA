@@ -25,8 +25,18 @@ class LifelongMemoryManager:
             # 确保持久化目录存在
             os.makedirs(self.persist_dir, exist_ok=True)
             self.chroma_client = chromadb.PersistentClient(path=self.persist_dir)
-            self.collection = self.chroma_client.get_or_create_collection(name="grasp_affordance_memory")
-            logger.info("ChromaDB Client Initialized for Lifelong Memory.")
+            
+            # 使用一个 Dummy Embedding Function 避免在国内下载 ONNX all-MiniLM-L6-v2 模型超时
+            from chromadb.api.types import EmbeddingFunction, Documents, Embeddings
+            class DummyEmbeddingFunction(EmbeddingFunction):
+                def __call__(self, input: Documents) -> Embeddings:
+                    return [[0.0] * 384 for _ in input]
+                    
+            self.collection = self.chroma_client.get_or_create_collection(
+                name="grasp_affordance_memory", 
+                embedding_function=DummyEmbeddingFunction()
+            )
+            logger.info("ChromaDB Client Initialized for Lifelong Memory (with Dummy Embedder).")
         else:
             self.chroma_client = None
             logger.warning("ChromaDB not installed, falling back to in-memory store.")
