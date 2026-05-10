@@ -128,3 +128,20 @@
 
 **项目当前里程碑状态：**
 目前机器人已能够完全按照非结构化指令，以具备自我审查（Self-reflective）、环境空间感知（VLM Yaw Reasoning）、错误重定位机制（Live Re-localization）的方式，完成复杂的四物体连续抓取与精准托盘投放流。
+
+---
+
+## 阶段八：异构双系统架构重构与 Qwen-VL 集成 (2026-05-10 实验打卡)
+
+基于对端到端 VLA 模型的深入分析，我们发现 VLA（如 pi0）在经过动作微调 (action-finetuning) 后会产生灾难性遗忘，导致其丢失作为纯粹 VLM 时的复杂逻辑推理和空间拓扑理解能力。为了最大化框架性能，我们正式确立了 **Agentic-VLA 异构双系统 (Heterogeneous Dual-System) 架构**：
+
+1. **确立纯 VLM 为 System 2 大脑：**
+   恢复并集成了本地化部署的 `Qwen3-VL-8B` 作为认知核心。它不参与任何直接的动作输出，从而保留了最纯粹的 Topo-Graph RAG、Evo-KAM 记忆检索以及 Critic 反思纠错能力。
+2. **确立冻结的 VLA 为 System 1 小脑：**
+   将真实物理仿真中的 `pi0` 模型设定为纯粹的 Action Expert (动作执行器)。它只负责接收来自 Qwen-VL 大脑的宏观语义指令和视觉掩码 (Visual Prompt)，并高频输出连续的 6-DoF 动作块 (Action Chunks)。
+3. **网络与依赖问题修复：**
+   - 修复了本地网络环境与 Git 代理的 GnuTLS 报错问题，并配置了针对 GitHub 仓库的代码推送通道。
+   - 配置了完整的本地 Qwen-VL 加载路径，完成了双系统的代码流转与项目文档 (README) 的定稿更新。
+
+**项目当前里程碑状态：**
+代码库已整理完毕并准备推送至 GitHub 仓库 (`https://github.com/Tito-11/Agentic-VLA.git`)，Agentic-VLA 框架的理论叙事和工程实现已完全对齐 CCF-A 顶会投稿要求。
