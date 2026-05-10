@@ -1,4 +1,4 @@
-from .optimized_multi_agent import MultiAgentOrchestrator
 from .qwen_vision_agent import QwenVisionAgent
+from .optimized_multi_agent import AgenticVLAWorkflow
 
-__all__ = ["MultiAgentOrchestrator", "QwenVisionAgent"]
+__all__ = ["QwenVisionAgent", "AgenticVLAWorkflow"]

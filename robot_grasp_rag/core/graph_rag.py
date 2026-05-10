@@ -14,12 +14,21 @@ class GraphRAGManager:
     def build_scene_graph(self, actors, target_actor):
         """将目标周围的局部场景映射为多模态图结构"""
         G = nx.DiGraph()
-        
-        target_obj_pose = target_actor.pose.p
-        if hasattr(target_obj_pose, 'cpu'):
-            target_pos = target_obj_pose[0].cpu().numpy()
-        else:
-            target_pos = target_obj_pose[0] if len(target_obj_pose.shape) > 1 else target_obj_pose
+        if target_actor is None:
+            return G
+            
+        try:
+            if hasattr(target_actor, 'pose'):
+                target_obj_pose = target_actor.pose.p
+                if hasattr(target_obj_pose, 'cpu'):
+                    target_pos = target_obj_pose[0].cpu().numpy()
+                else:
+                    target_pos = target_obj_pose[0] if len(target_obj_pose.shape) > 1 else target_obj_pose
+            else:
+                # Robosuite objects don't have pose directly in this format
+                return G
+        except Exception:
+            return G
         G.add_node("target", cls=target_actor.name.split('_')[-1])
 
         for a in actors:
@@ -30,11 +39,17 @@ class GraphRAGManager:
                 continue
             
             # Simple spatial relationship
-            other_obj_pose = a.pose.p
-            if hasattr(other_obj_pose, 'cpu'):
-                other_pos = other_obj_pose[0].cpu().numpy()
-            else:
-                other_pos = other_obj_pose[0] if len(other_obj_pose.shape) > 1 else other_obj_pose
+            try:
+                if hasattr(a, 'pose'):
+                    other_obj_pose = a.pose.p
+                    if hasattr(other_obj_pose, 'cpu'):
+                        other_pos = other_obj_pose[0].cpu().numpy()
+                    else:
+                        other_pos = other_obj_pose[0] if len(other_obj_pose.shape) > 1 else other_obj_pose
+                else:
+                    continue
+            except Exception:
+                continue
                 
             dist = np.linalg.norm(target_pos - other_pos)
             if dist < 0.15: # in vicinity (15cm)

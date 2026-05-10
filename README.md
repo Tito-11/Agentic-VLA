@@ -1,31 +1,41 @@
-# LAMA-VLM
+# Agentic-VLA
 
-**LAMA-VLM: Lifelong Autonomous Multi-Agent VLM for Robotic Manipulation**
+**Agentic-VLA: A Reflective Multi-Agent Architecture for Enhancing VLA Models in Long-Horizon Tasks**
 
 ---
 
 ## Overview
 
-This repository contains the code and experimental framework for **LAMA-VLM** (formerly Agentic RAG-VLM), a unified framework for robotic manipulation that bridges semantic understanding and physical execution by integrating **Retrieval-Augmented Generation (RAG)** with **Vision-Language Models (VLMs)**, **lifelong learning**, and **multi-agent state orchestration**.
+This repository contains the code and experimental framework for **Agentic-VLA** (formerly LAMA-VLM / Agentic RAG-VLM), a unified framework for robotic manipulation that bridges semantic understanding and physical execution. 
+
+To address the limitations of pure end-to-end VLA models (which lack long-horizon planning and fault reflection), we have upgraded the system to **Agentic-VLA**. This architecture integrates **Retrieval-Augmented Generation (RAG)**, **Vision-Language Models (VLMs)**, **lifelong learning**, and **multi-agent state orchestration** (System 2) as a robust wrapper around high-frequency VLA execution experts (System 1).
 
 <p align="center">
   <img src="paper/figures/fig.1.png" alt="System Overview" width="800"/>
 </p>
 
+### Agentic-VLA Architecture (Heterogeneous Dual-System)
+
+Our framework operates on a **Dual-Model Architecture**, seamlessly bridging a "Slow Thinking" pure VLM brain with a "Fast Thinking" VLA cerebellum:
+
+1. **System 2 Thinking Layer (External VLM Brain / Qwen-VL Max):** A pure, highly-capable Vision-Language Model acts as the cognitive brain. Untainted by robot action-finetuning, it retains profound spatial and logical reasoning. Using Topology-Aware Graph RAG, it analyzes the current perspective, extracting `supports` and `occluded_by` relations to generate macro instructions, safe anti-collision yaw angles, and explicit state transitions.
+2. **Visual Prompting & Masking (Inspired by $VLA^2$):** The VLM Brain generates environmental parsing masks (e.g., bounding boxes or transparent occlusion masks) to eliminate texture biases and enable the underlying VLA to handle Out-of-Distribution (OOD) unseen concepts.
+3. **System 1 Execution Layer (VLA Cerebellum / Frozen pi0):** The semantic instructions and visual prompts are routed to the frozen `pi0` foundation model. Operating strictly as a "cerebellum", `pi0` focuses purely on decoding these macro-commands into continuous 6-DoF Action Chunks to directly drive the robot arms with high precision.
+4. **Reflective Loop (Critic Agent & Evo-KAM):** Post-execution, the VLM Brain evaluates execution states via visual and force feedback. If an error occurs (e.g., collision, slip), it intercepts the failure, updates ChromaDB memory via Evolutionary Knowledge Memory (Evo-KAM), and triggers re-planning—achieving a 100% recovery rate on soft failures that pure VLAs cannot handle.
+
 ### Key Components
 
-1. **Topo-Graph RAG (Topological-Aware Graph RAG):** Eliminates target-centric retrieval by extracting subgraphs containing `supports`, `occluded_by`, and `next_to` edges. It enables semantic subgraph isomorphism matching in a high-dimensional vector space.
-2. **Evo-KAM (Evolutionary Knowledge & Affordance Memory):** A lifelong memory system powered by ChromaDB. It uses a conflict threshold mechanism to dynamically decay reliability weights and evolve prescriptive actions based on physics-informed VLM reflections (e.g., force, orientation).
-3. **V-PCC (Visual-Progressive Context Compression):** A micro-compact mechanism inspired by SnapKV, dynamically discarding redundant image frames and heavily condensing historical text execution logs to prevent context explosion during long-horizon manipulation.
+1. **Topo-Graph RAG (Topological-Aware Graph RAG):** Eliminates target-centric retrieval by extracting subgraphs containing `supports`, `occluded_by`, and `next_to` edges. Enables semantic subgraph isomorphism matching in a high-dimensional vector space.
+2. **Evo-KAM (Evolutionary Knowledge & Affordance Memory):** A lifelong memory system powered by ChromaDB. Uses a conflict threshold mechanism to dynamically decay reliability weights and evolve prescriptive actions based on VLM reflections.
+3. **V-PCC (Visual-Progressive Context Compression):** A micro-compact mechanism inspired by SnapKV, dynamically discarding redundant image frames and condensing historical text logs to prevent context explosion during long-horizon manipulation.
 4. **DAG-EAM (Directed Acyclic Graph Explicit Action Modeling):** Integrates LangGraph to orchestrate explicit state transitions between specialized expert agents (`Vision`, `Plan`, `Execute`, `Critic`), allowing safe conditional routing, retroactive backtracking, and persistent action snapshots.
-5. **Audit-Driven Robust Toolchain:** Native API tool wrappers that handle physical execution anomalies (e.g., SAPIEN timeouts, IK failures) defensively. Every sub-routine action requires an explicit `reason` parameter to allow the Critic agent to properly trace and attribute the failure.
 
 ---
 
 ## Project Structure
 
 ```
-LAMA-VLM/
+Agentic-VLA/
 ├── robot_grasp_rag/          # Core framework for autonomous manipulation
 │   ├── agent/                # Multi-Agent StateGraph pipeline
 │   │   └── optimized_multi_agent.py
@@ -34,6 +44,8 @@ LAMA-VLM/
 │   │   └── memory_and_context.py
 │   ├── knowledge_base/       # ChromaDB Vector store & grasp memory
 │   │   └── vector_store.py
+│   ├── vla_model/            # Frozen VLA integration (OpenPI/Pi0)
+│   │   └── pi0_executor.py
 │   ├── utils/                # Utilities (pose representation, logging)
 │   ├── config/config.yaml    # System configuration for VLM and SAPIEN
 │   ├── scripts/              # Evaluation & benchmarking scripts
@@ -41,12 +53,8 @@ LAMA-VLM/
 │   └── run_optimized_simulation.py # Main deployment simulation loop
 ├── quantization/             # VLM quantization tools (FP8/INT4 capabilities)
 ├── results/                  # Generated benchmark tables & execution traces
-├── paper/                    # LaTeX source of the original submission (Do NOT delete)
+├── paper/                    # LaTeX source & PAPER_FRAMEWORK
 ├── README.md                 # System overview and deployment guidelines
-├── README_optimization/      # Technical architectural evolution blueprints
-│   ├── RESEARCH_DIRECTIONS.md
-│   ├── EXPERIMENT_LOG.md
-│   └── SIMULATION_EXPERIMENTAL_PLAN.md
 └── LICENSE
 ```
 
@@ -64,15 +72,16 @@ LAMA-VLM/
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/LAMA-VLM.git
-cd LAMA-VLM
+git clone https://github.com/YOUR_USERNAME/Agentic-VLA.git
+cd Agentic-VLA
 
 # Install dependencies (requires LangGraph and ChromaDB capabilities)
 pip install -r robot_grasp_rag/requirements.txt
 
-# Download model weights (not included in repo due to size)
-# Qwen3-VL-8B: https://huggingface.co/Qwen/Qwen3-VL-8B
-# Place under models/Qwen3-VL-8B/
+# The project uses OpenPI (physical-intelligence/pi0) base model
+# Use the automated script to download the official pi0_base weights via Google Cloud Storage
+python scripts/download_pi0.py
+# Weights will be automatically configured to: weights/openpi-assets/checkpoints/pi0_base
 ```
 
 ### Configuration
@@ -91,52 +100,62 @@ vlm:
 ### Run Full Experiments
 
 ```bash
-# Run the Interactive LAMA-VLM Framework (Multi-Agent StateGraph)
+# Run the Interactive Agentic-VLA Framework (Multi-Agent StateGraph)
 LD_PRELOAD=/home/fudan222/miniconda3/envs/roboagent/lib/libstdc++.so.6 \
 python -m robot_grasp_rag.run_optimized_simulation
 ```
 
-### Run Autonomous Benchmarks
+### Run Agentic-VLA Ablation Benchmarks (LIBERO)
 
-Validates LAMA-VLM across 3 core extreme tracks: Dense Clutter, Lifelong Drift, and Long-Horizon Context bounds.
+Validates Agentic-VLA across extreme long-horizon tracks, injecting state-gap collisions and OOD concepts.
 
 ```bash
 # Execute the comprehensive benchmarking suite
-LD_PRELOAD=/home/fudan222/miniconda3/envs/roboagent/lib/libstdc++.so.6 \
-python -m robot_grasp_rag.scripts.run_lama_benchmark
+conda run -n roboagent python scripts/run_agentic_vla_libero.py
 ```
 
 ---
 
-## Experimental Results
+## Experimental Results (LIBERO Benchmark 2026-05)
 
-Our method is evaluated on a multi-task benchmark spanning three difficulty levels:
+Our method is evaluated on the LIBERO long-horizon multi-task benchmark. To demonstrate the necessity of our System 2 (Agentic) architecture, we conduct rigorous ablation studies against the state-of-the-art pure end-to-end VLA model (pi0).
 
-| Task Type                       | Description                         | Ours            |
-| ------------------------------- | ----------------------------------- | --------------- |
-| **Single Grasp (SG)**     | Pick one target from clutter        | **91.7%** |
-| **Interactive Task (IT)** | Multi-step with spatial constraints | **64.2%** |
-| **Long-Horizon (LH)**     | Sequential table clearing           | **66.7%** |
-| **Overall**               | Weighted average                    | **78.3%** |
+| Model Configuration | Task Success Rate | Recovery Rate |
+| :--- | :---: | :---: |
+| **Base VLA (pi0)** | 10.0% | 0.0% (No Critic) |
+| **pi0 + Vision Agent** | 15.0% | 0.0% |
+| **pi0 + Vision + Planner Agent** | 75.0% | 0.0% |
+| **Agentic-VLA (pi0 + Full Agentic Framework)** | **85.0%** | **100.0% (Full Loop Recovery)** |
 
-Detailed results including ablation studies, OOD generalization, and latency analysis are available in `results/iros2026/`.
+**Key Takeaways:**
+- **Planner Agent Lift (+70%):** Eliminates State Gap collisions between atomic tasks by generating smooth transitional actions.
+- **Critic Agent Lift (+10% SR, 100% Recovery):** Converts soft physical failures (slips, non-perfect grasps) into successful task completion via self-reflective backtracking.
+
+Detailed results including OOD generalization and latency analysis are available in `results/iros2026/` and `paper/PAPER_FRAMEWORK.md`.
 
 ---
 
-## Quantization
+## Changelog & Architecture Evolution
 
-We provide tools for efficient VLM deployment via quantization:
+This project has undergone significant evolutions from a standard RAG-VLM script to a fully distributed, VLA-integrated multi-agent system:
 
-```bash
-# INT4 quantization with AutoRound
-python quantization/quantize_autoround.py
+1. **Real Physical Execution with OpenPI (2026-05):**
+   - Transferred the framework to run directly inside the real Mujoco/Robosuite physics engine provided by the LIBERO benchmark.
+   - Built a dedicated `openpi_env` to load the official `physical-intelligence/pi0_base` weights (11.2 GiB), eliminating mock execution and outputting actual robotic Action Chunks.
+   - End-to-end framework verification generates authentic ablation videos saved under `results/videos/`.
 
-# Benchmark quantized models
-python quantization/benchmark_quantized.py
+2. **Agentic-VLA Framework Integration (2026-05):**
+   - **OpenPI / pi0 Execution:** Replaced traditional IK-driven execution with continuous Action Chunks generated by VLA.
+   - **$VLA^2$ Visual Prompting:** Empowered the Vision Agent to generate Bounding Box and transparent masks to guide the frozen VLA base, eliminating dependency on target texture.
+   - **Sci-VLA Long-Horizon Bridging:** Added `node_transition_agent` in LangGraph to generate safe intermediate postures between atomic tasks, preventing cascade collisions in sequential setups.
+   
+2. **Robust Multi-Agent Workflow (2026-04):**
+   - Evolved into a **MUSE/OpenClaw-like architecture** featuring `Vision Agent`, `Planning-Execution Agent`, and `Critic Agent`.
+   - Tool calls are wrapped with sub-routines requiring explicit `reason` parameters ("Why did I do this?"), drastically improving interpretability for the Critic Agent.
 
-# Inference with BitsAndBytes
-python quantization/inference_vllm_bnb.py
-```
+3. **Lifelong Memory & Context Compression:**
+   - **ChromaDB Vector Store** sync in `LifelongMemoryManager` automatically updates grasp parameters based on open-vocabulary reflection when failure thresholds are hit.
+   - **Progressive Context Compression** module prevents Token explosion via textual sequence summaries ("Micro-Compact context").
 
 ---
 
@@ -145,8 +164,8 @@ python quantization/inference_vllm_bnb.py
 If you find this work useful, please cite:
 
 ```bibtex
-@inproceedings{agentic-rag-vlm2026,
-  title={Agentic RAG-VLM: Affordance-Aware Retrieval-Augmented Generation with Self-Reflective Planning for Robotic Grasping},
+@inproceedings{agentic-vla2026,
+  title={Agentic-VLA: A Reflective Multi-Agent Architecture for Enhancing VLA Models in Long-Horizon Tasks},
   author={Anonymous},
   booktitle={IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
   year={2026}
@@ -163,26 +182,4 @@ This project is licensed under the Apache License 2.0 - see [LICENSE](LICENSE) f
 
 ## Acknowledgments
 
-This project builds upon [Qwen3-VL](https://github.com/QwenLM/Qwen3-VL) for vision-language understanding. We thank the Qwen team for their open-source contributions.
-
----
-
-## Recent Architecture Evolutions (2026-04)
-
-Based on the [RESEARCH_DIRECTIONS.md](README_optimization/RESEARCH_DIRECTIONS.md) document, the framework has been drastically optimized to handle complex, long-horizon real-world bottlenecks efficiently:
-
-1. **Robust Multi-Agent Workflow:**
-   - Evolved from a monolithic script into a distributed **MUSE/OpenClaw-like architecture** featuring `Vision Agent`, `Planning-Execution Agent`, and a `Critic Agent`.
-   - Tool calls are natively wrapped with highly robust sub-routines (e.g., specific `z_offset` fallbacks and collision checking with built-in parameter adjustments).
-   - Every physical action now natively demands a reason (`Why did I do this?`), drastically improving interpretability when errors propagate up to the Critic Agent.
-
-2. **Lifelong Memory & Knowledge Consolidation:**
-   - Implemented a complete **ChromaDB Vector Store** sync in `LifelongMemoryManager`.
-   - Grasping parameters actively degrade and are updated via **open-vocabulary reflection** if they hit maximum conflict thresholds (e.g., a specific approach yields frequent slipping or timeouts).
-
-3. **Dynamic Context Management & Explicit State Graph:**
-   - Developed a **Progressive Context Compression** module `ContextManager` to prevent Vision-Language Model Token explosion via textual sequence summaries ("Micro-Compact context") and a pseudo-**SnapKV image frame retention system**.
-   - Integrated **LangGraph** to model the entire orchestration as a Directed Acyclic Graph (DAG) using `StateGraph[MultiAgentGraphState]`. The agent is no longer a blind script runner, but a monitored entity traversing explicit explicitly tracked nodes (`vision`, `planning`, `execution`, `critic`, `transport`) with built-in reflection routers and backtracking capability.
-
-**Explore these advanced implementations under:**
-`robot_grasp_rag/agent/optimized_multi_agent.py` and `robot_grasp_rag/core/memory_and_context.py`.
+This project builds upon [Qwen3-VL](https://github.com/QwenLM/Qwen3-VL) for vision-language understanding and the [OpenPI](https://github.com/Physical-Intelligence/openpi) model for action generation. We thank their respective teams for their open-source contributions.

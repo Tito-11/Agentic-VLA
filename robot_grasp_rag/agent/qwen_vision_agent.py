@@ -14,7 +14,7 @@ class QwenVisionAgent:
     """
     VLM Task Planner & Visual Grounding Agent based on locally deployed Qwen3-VL-8B.
     """
-    def __init__(self, model_path: str = "models/Qwen3-VL-8B", device: str = "cuda"):
+    def __init__(self, model_path: str = "/home/fudan222/ct/LAMA-VLM/models/Qwen3-VL-8B", device: str = "cuda"):
         self.device = device
         self.model_path = model_path
         logger.info(f"Loading Qwen-VL model from {model_path} on {device}...")

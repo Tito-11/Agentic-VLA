@@ -1,0 +1,1 @@
+/home/fudan222/ct/Qwen3-VL/models/Qwen3-VL-8B

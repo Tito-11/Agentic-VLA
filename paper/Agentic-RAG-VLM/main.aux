@@ -1,0 +1,132 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{kumra2020grconvnet,fang2023anygrasp}
+\citation{shridhar2022cliport}
+\citation{brohan2023rt2}
+\citation{ahn2022saycan}
+\citation{huang2023voxposer}
+\citation{liang2023code}
+\citation{li2024manipllm}
+\citation{radford2021clip}
+\citation{gibson1977affordance}
+\citation{zeng2020transporter}
+\citation{kwon2024spatialvlm}
+\citation{kumra2020grconvnet,fang2023anygrasp,sundermeyer2021contact}
+\citation{huang2022inner}
+\citation{shinn2023reflexion}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{I}{1}{Introduction}{section.1}{}}
+\citation{brohan2023rt2}
+\citation{ahn2022saycan}
+\citation{huang2023voxposer}
+\citation{liang2023code}
+\citation{li2024manipllm}
+\citation{liu2025robodexvlm}
+\citation{wake2023gpt4v}
+\citation{lewis2020rag}
+\citation{liu2023reflect}
+\citation{gibson1977affordance}
+\citation{mandikal2021dexvip}
+\citation{mo2021where2act}
+\citation{kumra2020grconvnet,fang2023anygrasp,sundermeyer2021contact}
+\citation{huang2022inner}
+\citation{shinn2023reflexion}
+\citation{zeng2020transporter}
+\citation{kwon2024spatialvlm}
+\citation{radford2021clip}
+\@writefile{toc}{\contentsline {section}{\numberline {II}Related Work}{2}{section.2}\protected@file@percent }
+\newlabel{sec:related}{{II}{2}{Related Work}{section.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {III}Affordance-Aware Retrieval and\\Constraint Reasoning}{2}{section.3}\protected@file@percent }
+\newlabel{sec:retrieval}{{III}{2}{Affordance-Aware Retrieval and\texorpdfstring {\\}{ }Constraint Reasoning}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {III-A}Hierarchical Affordance-Aware RAG}{2}{subsection.3.1}\protected@file@percent }
+\newlabel{sec:haarag}{{III-A}{2}{Hierarchical Affordance-Aware RAG}{subsection.3.1}{}}
+\newlabel{eq:affordance_sim}{{1}{2}{Hierarchical Affordance-Aware RAG}{equation.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Overview of Agentic RAG-VLM{}. The VLM-based Task Planner processes multimodal input and orchestrates a seven-stage execution pipeline: scene perception, affordance-aware retrieval via HAA-RAG, scene graph constraint reasoning ($\Delta \mathbf  {g}$), and grasp execution. Upon failure ($\times $), the recovery loop diagnoses failures via a 14-type taxonomy, escalates corrections through three levels (L1: parameter tuning $\to $ L2: method switch $\to $ L3: full replan), and stores successful grasps in episodic memory $\mathcal  {M}$ for cross-task transfer.}}{3}{figure.caption.1}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:system}{{1}{3}{Overview of \sysname {}. The VLM-based Task Planner processes multimodal input and orchestrates a seven-stage execution pipeline: scene perception, affordance-aware retrieval via HAA-RAG, scene graph constraint reasoning ($\Delta \mathbf {g}$), and grasp execution. Upon failure ($\times $), the recovery loop diagnoses failures via a 14-type taxonomy, escalates corrections through three levels (L1: parameter tuning $\to $ L2: method switch $\to $ L3: full replan), and stores successful grasps in episodic memory $\mathcal {M}$ for cross-task transfer}{figure.caption.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {III-B}Scene Graph Constraint Reasoning}{3}{subsection.3.2}\protected@file@percent }
+\newlabel{sec:scene_graph}{{III-B}{3}{Scene Graph Constraint Reasoning}{subsection.3.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Hierarchical Affordance-Aware RAG (HAA-RAG{}) pipeline. Experiences are progressively filtered through three levels: category matching, affordance scoring, and visual re-ranking, reducing 116 candidates to 3 physically appropriate strategies. Right annotations show candidate count at each stage.}}{3}{figure.caption.2}\protected@file@percent }
+\newlabel{fig:haarag}{{2}{3}{Hierarchical Affordance-Aware RAG (\haarag {}) pipeline. Experiences are progressively filtered through three levels: category matching, affordance scoring, and visual re-ranking, reducing 116 candidates to 3 physically appropriate strategies. Right annotations show candidate count at each stage}{figure.caption.2}{}}
+\citation{yao2023react}
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Agentic Self-Reflective Grasp Planning}{4}{section.4}\protected@file@percent }
+\newlabel{sec:agentic}{{IV}{4}{Agentic Self-Reflective Grasp Planning}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-A}ReAct-Style Planning Loop}{4}{subsection.4.1}\protected@file@percent }
+\newlabel{sec:react}{{IV-A}{4}{ReAct-Style Planning Loop}{subsection.4.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-B}Failure Recovery with Structured Reflection}{4}{subsection.4.2}\protected@file@percent }
+\newlabel{sec:failure}{{IV-B}{4}{Failure Recovery with Structured Reflection}{subsection.4.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Scene graph constraint reasoning. Left: scene graph $\mathcal  {G}$ with object nodes and spatial relations. Right: four constraint types inferred from the graph, each mapped to concrete parameter adjustments $\Delta \mathbf  {g}$ that modify the planned grasp.}}{4}{figure.caption.3}\protected@file@percent }
+\newlabel{fig:scene_graph}{{3}{4}{Scene graph constraint reasoning. Left: scene graph $\mathcal {G}$ with object nodes and spatial relations. Right: four constraint types inferred from the graph, each mapped to concrete parameter adjustments $\Delta \mathbf {g}$ that modify the planned grasp}{figure.caption.3}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Agentic Self-Reflective Grasp Planning}}{4}{algorithm.1}\protected@file@percent }
+\newlabel{alg:agentic}{{1}{4}{Agentic Self-Reflective Grasp Planning}{algorithm.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-C}Episodic Memory and Cross-Task Transfer}{4}{subsection.4.3}\protected@file@percent }
+\newlabel{sec:memory}{{IV-C}{4}{Episodic Memory and Cross-Task Transfer}{subsection.4.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-D}Grasp Quality Model}{4}{subsection.4.4}\protected@file@percent }
+\newlabel{sec:quality}{{IV-D}{4}{Grasp Quality Model}{subsection.4.4}{}}
+\newlabel{eq:quality}{{2}{4}{Grasp Quality Model}{equation.2}{}}
+\citation{bai2025qwen3}
+\citation{dettmers2024bnb}
+\citation{liu2025robodexvlm}
+\citation{kumra2020grconvnet}
+\citation{fang2023anygrasp}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Agentic self-reflective planning loop. The ReAct cycle generates Thought$\to $Action$\to $Observation. Failures trigger reflection using a 14-type taxonomy, escalating through three retry levels. Successes are stored in episodic memory $\mathcal  {M}$ for cross-task transfer.}}{5}{figure.caption.4}\protected@file@percent }
+\newlabel{fig:agentic_loop}{{4}{5}{Agentic self-reflective planning loop. The ReAct cycle generates Thought$\to $Action$\to $Observation. Failures trigger reflection using a 14-type taxonomy, escalating through three retry levels. Successes are stored in episodic memory $\mathcal {M}$ for cross-task transfer}{figure.caption.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {V}Experimental Analysis}{5}{section.5}\protected@file@percent }
+\newlabel{sec:experiments}{{V}{5}{Experimental Analysis}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V-A}Experimental Setup}{5}{subsection.5.1}\protected@file@percent }
+\newlabel{sec:setup}{{V-A}{5}{Experimental Setup}{subsection.5.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces \textsc  {Object Dataset}: 12 objects spanning 10 categories and 8 affordance types. Fragility ranges from 0.0 (durable) to 0.9 (very fragile).}}{5}{table.caption.5}\protected@file@percent }
+\newlabel{tab:objects}{{I}{5}{\textsc {Object Dataset}: 12 objects spanning 10 categories and 8 affordance types. Fragility ranges from 0.0 (durable) to 0.9 (very fragile)}{table.caption.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces \textsc  {Component Analysis} on 12-task benchmark. Success rate (\%) per task category and overall (30 trials each). $\Delta $: change vs.\ Full System. All evaluated identically. Best in \textbf  {bold}.}}{5}{table.caption.6}\protected@file@percent }
+\newlabel{tab:sota}{{II}{5}{\textsc {Component Analysis} on 12-task benchmark. Success rate (\%) per task category and overall (30 trials each). $\Delta $: change vs.\ Full System. All evaluated identically. Best in \textbf {bold}}{table.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V-B}Main Results: Component Analysis}{5}{subsection.5.2}\protected@file@percent }
+\newlabel{sec:sota}{{V-B}{5}{Main Results: Component Analysis}{subsection.5.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V-C}Recovery Mechanism Effectiveness}{6}{subsection.5.3}\protected@file@percent }
+\newlabel{sec:recovery_exp}{{V-C}{6}{Recovery Mechanism Effectiveness}{subsection.5.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces \textsc  {Recovery Mechanism Effectiveness} across task categories. 30 trials per task, average over category.}}{6}{table.caption.8}\protected@file@percent }
+\newlabel{tab:recovery}{{III}{6}{\textsc {Recovery Mechanism Effectiveness} across task categories. 30 trials per task, average over category}{table.caption.8}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces \textsc  {Retrieval Quality Evaluation} on 12 object queries against a 116-entry knowledge base.}}{6}{table.caption.9}\protected@file@percent }
+\newlabel{tab:haarag}{{IV}{6}{\textsc {Retrieval Quality Evaluation} on 12 object queries against a 116-entry knowledge base}{table.caption.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V-D}Retrieval Quality Analysis}{6}{subsection.5.4}\protected@file@percent }
+\newlabel{sec:retrieval_exp}{{V-D}{6}{Retrieval Quality Analysis}{subsection.5.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V-E}Scene Graph Constraint Analysis}{6}{subsection.5.5}\protected@file@percent }
+\newlabel{sec:sg_exp}{{V-E}{6}{Scene Graph Constraint Analysis}{subsection.5.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V-F}Out-of-Distribution Generalization}{6}{subsection.5.6}\protected@file@percent }
+\newlabel{sec:ood}{{V-F}{6}{Out-of-Distribution Generalization}{subsection.5.6}{}}
+\citation{liu2025robodexvlm}
+\bibstyle{IEEEtran}
+\bibdata{references}
+\bibcite{kumra2020grconvnet}{1}
+\bibcite{fang2023anygrasp}{2}
+\bibcite{shridhar2022cliport}{3}
+\bibcite{brohan2023rt2}{4}
+\bibcite{ahn2022saycan}{5}
+\bibcite{huang2023voxposer}{6}
+\bibcite{liang2023code}{7}
+\bibcite{li2024manipllm}{8}
+\bibcite{radford2021clip}{9}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Qualitative execution traces across the three task categories. \textbf  {SG}: direct four-step pipeline succeeding on the first attempt. \textbf  {IT}: constraint-aware manipulation with slip failure $\to $ L1 retry $\to $ recovery. \textbf  {LH}: three-object clearing task with episodic memory transfer accelerating the second same-category grasp.}}{7}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:qualitative}{{5}{7}{Qualitative execution traces across the three task categories. \textbf {SG}: direct four-step pipeline succeeding on the first attempt. \textbf {IT}: constraint-aware manipulation with slip failure $\to $ L1 retry $\to $ recovery. \textbf {LH}: three-object clearing task with episodic memory transfer accelerating the second same-category grasp}{figure.caption.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces \textsc  {Scene Graph Reasoning Impact} on interactive tasks (120 trials total).}}{7}{table.caption.10}\protected@file@percent }
+\newlabel{tab:scene_graph}{{V}{7}{\textsc {Scene Graph Reasoning Impact} on interactive tasks (120 trials total)}{table.caption.10}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Conclusion}{7}{section.6}\protected@file@percent }
+\newlabel{sec:conclusion}{{VI}{7}{Conclusion}{section.6}{}}
+\@writefile{toc}{\contentsline {section}{References}{7}{section*.11}\protected@file@percent }
+\bibcite{gibson1977affordance}{10}
+\bibcite{zeng2020transporter}{11}
+\bibcite{kwon2024spatialvlm}{12}
+\bibcite{sundermeyer2021contact}{13}
+\bibcite{huang2022inner}{14}
+\bibcite{shinn2023reflexion}{15}
+\bibcite{liu2025robodexvlm}{16}
+\bibcite{wake2023gpt4v}{17}
+\bibcite{lewis2020rag}{18}
+\bibcite{liu2023reflect}{19}
+\bibcite{mandikal2021dexvip}{20}
+\bibcite{mo2021where2act}{21}
+\bibcite{yao2023react}{22}
+\bibcite{bai2025qwen3}{23}
+\bibcite{dettmers2024bnb}{24}
+\gdef \@abspage@last{8}
